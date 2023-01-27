@@ -4,10 +4,10 @@ from shapely.wkt import loads as wkt_loads
 import csv
 
 
-GS_s = pd.read_csv('Annotations/grid_sizes_125.csv', names=['ImageId', 'Xmin', 'Xmax', 'Ymin', 'Ymax'], skiprows=1)
-DF_s = pd.read_csv('Annotations/combined_polygons_125.csv')
+GS_s = pd.read_csv('Dataset/Annotations/grid_sizes_125.csv', names=['ImageId', 'Xmin', 'Xmax', 'Ymin', 'Ymax'], skiprows=1)
+DF_s = pd.read_csv('Dataset/Annotations/combined_polygons_125.csv')
 img_size = 1300
-annotations_dir = 'Annotations/'
+annotations_dir = 'Dataset/Annotations/'
 
 def _get_xmin_xmax_ymin_ymax_spacenet(grid_sizes_panda, imageId):
     xmin, xmax, ymin, ymax = grid_sizes_panda[grid_sizes_panda.ImageId == imageId].iloc[0, 1:].astype(float)
@@ -30,10 +30,29 @@ def _get_polygon_list(wkt_list_pandas, imageId, cType):
     if len(multipoly_def) > 0:
         assert len(multipoly_def) == 1
         polygonList = wkt_loads(multipoly_def.values[0])
+
+        if polygonList.type == 'MultiPolygon':
+            polygonList = list(polygonList.geoms)
+
+        elif polygonList.type == 'Polygon':
+            polygonList = [polygonList]
+
+        else:
+            raise ValueError('Type not Polygon or MultiPolygon!')
+            
     return polygonList
 
 
+# Convert the polygons to raster space and return the coordinates
+
+# What does this function do?
+
+# 1. Get the coordinates of the polygon
+# 2. Convert the coordinates to raster space
+# 3. Return the coordinates
+
 def _get_and_convert_contours_spacenet(polygonList, raster_img_size, xyminmax):
+
     perim_list = []
     interior_list = []
     if polygonList is None:
